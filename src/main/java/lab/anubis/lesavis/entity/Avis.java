@@ -17,4 +17,6 @@ public class Avis {
     private int id;
     private String message;
     private String status;
+    @ManyToOne
+    private User user;
 }

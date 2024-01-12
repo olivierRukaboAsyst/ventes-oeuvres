@@ -1,6 +1,5 @@
 package lab.anubis.lesavis.security;
 
-import lab.anubis.lesavis.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -10,15 +9,27 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import static org.springframework.http.HttpMethod.POST;
 
 @Configuration
 @EnableWebSecurity
 public class ConfigurationSecurityApplication {
+
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final JwtFilter jwtFilter;
+    private final UserDetailsService userDetailsService;
+    public ConfigurationSecurityApplication(JwtFilter jwtFilter, BCryptPasswordEncoder bCryptPasswordEncoder,
+                                            UserDetailsService userDetailsService) {
+        this.jwtFilter = jwtFilter;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -31,13 +42,14 @@ public class ConfigurationSecurityApplication {
                                                 .requestMatchers(POST, "/activation").permitAll()
                                                 .requestMatchers(POST, "/connexion").permitAll()
                                                 .anyRequest().authenticated()
-                        ).build();
+                        )
+                        .sessionManagement(httpSecuritySessionManagementConfigurer ->
+                                httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                                )
+                        .addFilterBefore(jwtFilter,  UsernamePasswordAuthenticationFilter.class)
+                        .build();
     }
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder(){
-        return  new BCryptPasswordEncoder();
-    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -45,10 +57,10 @@ public class ConfigurationSecurityApplication {
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService){
+    public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setUserDetailsService(userDetailsService);
-        daoAuthenticationProvider.setPasswordEncoder(this.passwordEncoder());
+        daoAuthenticationProvider.setPasswordEncoder(bCryptPasswordEncoder);
         return daoAuthenticationProvider;
     }
 }

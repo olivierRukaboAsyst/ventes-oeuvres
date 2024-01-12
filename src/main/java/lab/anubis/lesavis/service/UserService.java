@@ -58,7 +58,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public User loadUserByUsername(String username) throws UsernameNotFoundException {
         return this.userReposiroty
                     .findByEmail(username)
                     .orElseThrow(() -> new UsernameNotFoundException("Cet email n'as aucun utilisateur dans le systeme"));

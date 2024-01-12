@@ -2,6 +2,7 @@ package lab.anubis.lesavis.controller;
 
 import lab.anubis.lesavis.dto.AuthenticationDTO;
 import lab.anubis.lesavis.entity.User;
+import lab.anubis.lesavis.security.JwtService;
 import lab.anubis.lesavis.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class UserController {
 
     private UserService userService;
     private AuthenticationManager authenticationManager;
+    private JwtService jwtService;
 
     @PostMapping(path = "inscription")
     public void inscription(@RequestBody User user){
@@ -37,10 +39,13 @@ public class UserController {
 
     @PostMapping(path = "connexion")
     public Map<String, String> connexion(@RequestBody AuthenticationDTO authenticationDTO){
+        System.out.println("IN CONTROLLER");
         final Authentication authenticate = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authenticationDTO.username(), authenticationDTO.password())
         );
-        log.info("resultat: {}", authenticate.isAuthenticated());
+        if (authenticate.isAuthenticated()){
+            return this.jwtService.generate(authenticationDTO.username());
+        }
         return null;
     }
 
