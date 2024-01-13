@@ -5,6 +5,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lab.anubis.lesavis.Repository.JwtReposiroty;
+import lab.anubis.lesavis.entity.Jwt;
 import lab.anubis.lesavis.entity.User;
 import lab.anubis.lesavis.service.UserService;
 import lombok.AllArgsConstructor;
@@ -20,13 +22,18 @@ import java.util.function.Function;
 @Service
 @AllArgsConstructor
 public class JwtService {
+    public static final String BEARER = "bearer";
     private final String ENCRYPTION_KEY = "c10cfe892e14fd5d744b20455b333b10ec6d7fd260d6ab25c095ae3a103da120";
     private UserService userService;
+    private JwtReposiroty jwtReposiroty;
 
     public Map<String, String> generate(String username){
         User user = this.userService.loadUserByUsername(username);
 
-        return this.generateJwt(user);
+        Map<String, String> jwtMap = this.generateJwt(user);
+        Jwt jwt = Jwt.builder().valeur(jwtMap.get(BEARER)).desactive(false).expire(false).user(user).build();
+        this.jwtReposiroty.save(jwt);
+        return jwtMap;
     }
     public String extractUsername(String token) {
         return this.getClaim(token, Claims::getSubject);
@@ -73,7 +80,7 @@ public class JwtService {
                 .setClaims(userClaims)
                 .signWith(getKey())
                 .compact();
-        return Map.of("bearer", bearer);
+        return Map.of(BEARER, bearer);
     }
 
     private Key getKey(){
