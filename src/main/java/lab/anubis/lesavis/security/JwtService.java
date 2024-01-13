@@ -54,7 +54,7 @@ public class JwtService {
     }
 
     private Claims getAllClaims(String token) {
-        Claims body = Jwts.parserBuilder()
+        Claims body = Jwts.parser()
                 .setSigningKey(this.getKey())
                 .build()
                 .parseClaimsJws(token)
@@ -74,10 +74,10 @@ public class JwtService {
 
 
         final String bearer = Jwts.builder()
-                .setIssuedAt(new Date(currentTime))
-                .setExpiration(new Date(expirationTime))
-                .setSubject(user.getEmail())
-                .setClaims(userClaims)
+                .issuedAt(new Date(currentTime))
+                .expiration(new Date(expirationTime))
+                .subject(user.getEmail())
+                .claims(userClaims)
                 .signWith(getKey())
                 .compact();
         return Map.of(BEARER, bearer);
